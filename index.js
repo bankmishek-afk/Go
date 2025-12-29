@@ -1,0 +1,460 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  ShoppingBag, 
+  Heart, 
+  User, 
+  Search, 
+  Menu, 
+  X, 
+  Star, 
+  ChevronRight, 
+  Filter, 
+  ArrowLeft,
+  Truck,
+  ShieldCheck,
+  RefreshCw
+} from 'lucide-react';
+
+// Имитация данных о товарах
+const PRODUCTS = [
+  {
+    id: 1,
+    name: "Оверсайз худи 'Cloud'",
+    price: 4900,
+    rating: 4.8,
+    reviews: 124,
+    category: "Верхняя одежда",
+    image: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&q=80&w=800",
+    colors: ["#3b82f6", "#1e293b", "#94a3b8"],
+    sizes: ["S", "M", "L", "XL"]
+  },
+  {
+    id: 2,
+    name: "Джинсы Wide Leg Denim",
+    price: 6200,
+    rating: 4.9,
+    reviews: 89,
+    category: "Брюки",
+    image: "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&q=80&w=800",
+    colors: ["#1e3a8a", "#60a5fa"],
+    sizes: ["28", "30", "32", "34"]
+  },
+  {
+    id: 3,
+    name: "Платье миди 'Floral'",
+    price: 7500,
+    rating: 4.7,
+    reviews: 56,
+    category: "Платья",
+    image: "https://images.unsplash.com/photo-1572804013307-a9a11198427e?auto=format&fit=crop&q=80&w=800",
+    colors: ["#f43f5e", "#fbbf24"],
+    sizes: ["XS", "S", "M", "L"]
+  },
+  {
+    id: 4,
+    name: "Кроссовки Urban Runner",
+    price: 12900,
+    rating: 5.0,
+    reviews: 210,
+    category: "Обувь",
+    image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=80&w=800",
+    colors: ["#ef4444", "#000000", "#ffffff"],
+    sizes: ["38", "39", "40", "41", "42"]
+  }
+];
+
+const CATEGORIES = ["Все", "Женщинам", "Мужчинам", "Аксессуары", "Обувь", "Sale"];
+
+const App = () => {
+  const [currentPage, setCurrentPage] = useState('home'); // 'home', 'product', 'cart', 'profile'
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [cart, setCart] = useState([]);
+  const [favorites, setFavorites] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState("Все");
+
+  // Переключение в корзину
+  const addToCart = (product) => {
+    setCart(prev => {
+      const existing = prev.find(item => item.id === product.id);
+      if (existing) {
+        return prev.map(item => item.id === product.id ? {...item, quantity: item.quantity + 1} : item);
+      }
+      return [...prev, {...product, quantity: 1}];
+    });
+  };
+
+  const toggleFavorite = (productId) => {
+    setFavorites(prev => 
+      prev.includes(productId) ? prev.filter(id => id !== productId) : [...prev, productId]
+    );
+  };
+
+  const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+  // Компонент Навигации
+  const Navbar = () => (
+    <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 px-4 py-3">
+      <div className="max-w-7xl mx-auto flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <button className="lg:hidden p-2"><Menu size={24} /></button>
+          <h1 
+            className="text-2xl font-black tracking-tighter cursor-pointer"
+            onClick={() => setCurrentPage('home')}
+          >
+            MODA<span className="text-blue-600">HUB</span>
+          </h1>
+        </div>
+
+        <div className="hidden lg:flex flex-1 mx-12 relative">
+          <input 
+            type="text" 
+            placeholder="Поиск брендов, одежды, аксессуаров..."
+            className="w-full bg-gray-100 rounded-full py-2 px-10 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
+        </div>
+
+        <div className="flex items-center gap-5">
+          <button className="relative p-2 text-gray-600 hover:text-blue-600 transition-colors" onClick={() => setCurrentPage('profile')}>
+            <User size={24} />
+          </button>
+          <button className="relative p-2 text-gray-600 hover:text-blue-600 transition-colors">
+            <Heart size={24} />
+            {favorites.length > 0 && (
+              <span className="absolute top-1 right-1 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
+                {favorites.length}
+              </span>
+            )}
+          </button>
+          <button 
+            className="relative p-2 text-gray-600 hover:text-blue-600 transition-colors"
+            onClick={() => setCurrentPage('cart')}
+          >
+            <ShoppingBag size={24} />
+            {cart.length > 0 && (
+              <span className="absolute top-1 right-1 bg-blue-600 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
+                {cart.length}
+              </span>
+            )}
+          </button>
+        </div>
+      </div>
+    </nav>
+  );
+
+  // Страница Главная
+  const HomePage = () => (
+    <div className="animate-in fade-in duration-500">
+      {/* Hero Banner */}
+      <div className="relative h-[400px] w-full bg-slate-900 overflow-hidden flex items-center">
+        <img 
+          src="https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?auto=format&fit=crop&q=80&w=1600" 
+          className="absolute inset-0 w-full h-full object-cover opacity-60"
+          alt="Banner"
+        />
+        <div className="relative max-w-7xl mx-auto px-6 text-white">
+          <span className="bg-blue-600 px-3 py-1 rounded-full text-sm font-bold mb-4 inline-block">Новая коллекция 2025</span>
+          <h2 className="text-5xl md:text-7xl font-bold mb-6">Стиль вне <br/> времени</h2>
+          <button className="bg-white text-black px-8 py-3 rounded-full font-bold hover:bg-gray-100 transition-all flex items-center gap-2">
+            Смотреть каталог <ChevronRight size={20} />
+          </button>
+        </div>
+      </div>
+
+      {/* Categories Bar */}
+      <div className="max-w-7xl mx-auto px-4 py-8 overflow-x-auto whitespace-nowrap scrollbar-hide">
+        <div className="flex gap-4">
+          {CATEGORIES.map(cat => (
+            <button 
+              key={cat}
+              onClick={() => setActiveCategory(cat)}
+              className={`px-6 py-2 rounded-full border transition-all ${activeCategory === cat ? 'bg-black text-white border-black' : 'bg-white text-gray-600 border-gray-200 hover:border-black'}`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Product Grid */}
+      <div className="max-w-7xl mx-auto px-4 pb-20">
+        <div className="flex justify-between items-center mb-8">
+          <h3 className="text-2xl font-bold">Тренды недели</h3>
+          <button className="flex items-center gap-2 text-gray-500 font-medium">
+            Фильтры <Filter size={18} />
+          </button>
+        </div>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          {PRODUCTS.map(product => (
+            <div key={product.id} className="group cursor-pointer">
+              <div 
+                className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-gray-100 mb-4"
+                onClick={() => { setSelectedProduct(product); setCurrentPage('product'); }}
+              >
+                <img 
+                  src={product.image} 
+                  alt={product.name}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <button 
+                  onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id); }}
+                  className="absolute top-4 right-4 p-2 bg-white/80 backdrop-blur rounded-full shadow-sm hover:bg-white"
+                >
+                  <Heart size={18} className={favorites.includes(product.id) ? "fill-red-500 text-red-500" : "text-gray-600"} />
+                </button>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs text-gray-400 uppercase tracking-wider">{product.category}</p>
+                <h4 className="font-semibold text-gray-900 line-clamp-1">{product.name}</h4>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-lg">{product.price.toLocaleString()} ₽</span>
+                </div>
+                <div className="flex items-center gap-1 text-sm text-gray-500">
+                  <Star size={14} className="fill-yellow-400 text-yellow-400" />
+                  <span>{product.rating}</span>
+                  <span className="mx-1">•</span>
+                  <span>{product.reviews} отзывов</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  // Страница товара
+  const ProductPage = ({ product }) => (
+    <div className="max-w-7xl mx-auto px-4 py-8 animate-in slide-in-from-bottom-4 duration-500">
+      <button 
+        className="flex items-center gap-2 text-gray-500 mb-8 hover:text-black"
+        onClick={() => setCurrentPage('home')}
+      >
+        <ArrowLeft size={20} /> Назад к покупкам
+      </button>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        {/* Gallery */}
+        <div className="space-y-4">
+          <div className="aspect-[4/5] rounded-3xl overflow-hidden bg-gray-100">
+            <img src={product.image} className="w-full h-full object-cover" alt={product.name} />
+          </div>
+          <div className="grid grid-cols-4 gap-4">
+            {[1,2,3,4].map(i => (
+              <div key={i} className="aspect-square rounded-xl bg-gray-100 overflow-hidden cursor-pointer hover:opacity-75">
+                <img src={product.image} className="w-full h-full object-cover" alt="thumbnail" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Info */}
+        <div className="space-y-8">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-bold uppercase">В наличии</span>
+              <div className="flex items-center gap-1 ml-auto text-yellow-500">
+                <Star size={16} className="fill-current" />
+                <span className="font-bold text-black">{product.rating}</span>
+              </div>
+            </div>
+            <h2 className="text-3xl font-bold mb-2">{product.name}</h2>
+            <p className="text-gray-500 text-lg">{product.category}</p>
+          </div>
+
+          <div className="text-4xl font-black">{product.price.toLocaleString()} ₽</div>
+
+          <div className="space-y-4">
+            <h5 className="font-bold uppercase text-xs tracking-widest text-gray-400">Выберите размер</h5>
+            <div className="flex gap-3">
+              {product.sizes.map(size => (
+                <button key={size} className="w-12 h-12 rounded-xl border-2 border-gray-100 flex items-center justify-center font-bold hover:border-black transition-all">
+                  {size}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h5 className="font-bold uppercase text-xs tracking-widest text-gray-400">Цвет</h5>
+            <div className="flex gap-3">
+              {product.colors.map(color => (
+                <button 
+                  key={color} 
+                  className="w-8 h-8 rounded-full border-2 border-white ring-1 ring-gray-200"
+                  style={{ backgroundColor: color }}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="flex gap-4 pt-4">
+            <button 
+              className="flex-1 bg-blue-600 text-white py-4 rounded-2xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 active:scale-95"
+              onClick={() => { addToCart(product); setCurrentPage('cart'); }}
+            >
+              Добавить в корзину
+            </button>
+            <button 
+              onClick={() => toggleFavorite(product.id)}
+              className="p-4 rounded-2xl border-2 border-gray-100 hover:border-gray-200 transition-all"
+            >
+              <Heart className={favorites.includes(product.id) ? "fill-red-500 text-red-500 border-none" : "text-gray-400"} />
+            </button>
+          </div>
+
+          {/* Delivery & Security */}
+          <div className="grid grid-cols-3 gap-4 border-t border-gray-100 pt-8">
+            <div className="flex flex-col items-center text-center gap-2">
+              <div className="p-3 bg-gray-50 rounded-full text-blue-600"><Truck size={20} /></div>
+              <span className="text-xs font-medium">Бесплатная доставка</span>
+            </div>
+            <div className="flex flex-col items-center text-center gap-2">
+              <div className="p-3 bg-gray-50 rounded-full text-blue-600"><ShieldCheck size={20} /></div>
+              <span className="text-xs font-medium">Гарантия подлинности</span>
+            </div>
+            <div className="flex flex-col items-center text-center gap-2">
+              <div className="p-3 bg-gray-50 rounded-full text-blue-600"><RefreshCw size={20} /></div>
+              <span className="text-xs font-medium">Возврат 14 дней</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Страница корзины
+  const CartPage = () => (
+    <div className="max-w-4xl mx-auto px-4 py-12 animate-in fade-in duration-300">
+      <h2 className="text-3xl font-bold mb-8">Ваша корзина</h2>
+      
+      {cart.length === 0 ? (
+        <div className="text-center py-20 bg-gray-50 rounded-3xl">
+          <ShoppingBag size={64} className="mx-auto text-gray-300 mb-4" />
+          <h3 className="text-xl font-bold mb-2">Корзина пуста</h3>
+          <p className="text-gray-500 mb-8">Пора добавить в нее что-то стильное!</p>
+          <button 
+            className="bg-black text-white px-8 py-3 rounded-full font-bold"
+            onClick={() => setCurrentPage('home')}
+          >
+            В каталог
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-4">
+            {cart.map(item => (
+              <div key={item.id} className="flex items-center gap-4 bg-white p-4 rounded-2xl border border-gray-100">
+                <img src={item.image} className="w-24 h-24 rounded-xl object-cover" alt={item.name} />
+                <div className="flex-1">
+                  <h4 className="font-bold">{item.name}</h4>
+                  <p className="text-sm text-gray-500">{item.category}</p>
+                  <div className="flex items-center gap-4 mt-2">
+                    <div className="flex items-center border rounded-lg">
+                      <button className="px-3 py-1 hover:bg-gray-50">-</button>
+                      <span className="px-3 font-bold">{item.quantity}</span>
+                      <button className="px-3 py-1 hover:bg-gray-50">+</button>
+                    </div>
+                    <button className="text-red-500 text-sm font-medium">Удалить</button>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="font-black text-lg">{(item.price * item.quantity).toLocaleString()} ₽</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="bg-gray-50 p-6 rounded-3xl h-fit space-y-6">
+            <h3 className="text-xl font-bold">Итого</h3>
+            <div className="space-y-2">
+              <div className="flex justify-between text-gray-600">
+                <span>Товары ({cart.length})</span>
+                <span>{cartTotal.toLocaleString()} ₽</span>
+              </div>
+              <div className="flex justify-between text-gray-600">
+                <span>Доставка</span>
+                <span className="text-green-600 font-bold">Бесплатно</span>
+              </div>
+              <div className="pt-4 border-t border-gray-200 flex justify-between font-black text-xl">
+                <span>К оплате</span>
+                <span>{cartTotal.toLocaleString()} ₽</span>
+              </div>
+            </div>
+            <button className="w-full bg-black text-white py-4 rounded-2xl font-bold hover:bg-gray-800 transition-all">
+              Оформить заказ
+            </button>
+            <p className="text-[10px] text-center text-gray-400">
+              Нажимая кнопку, вы соглашаетесь с условиями оферты и политикой конфиденциальности.
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-white text-gray-900 font-sans selection:bg-blue-100 selection:text-blue-900">
+      <Navbar />
+      
+      <main className="min-h-[calc(100vh-140px)]">
+        {currentPage === 'home' && <HomePage />}
+        {currentPage === 'product' && <ProductPage product={selectedProduct} />}
+        {currentPage === 'cart' && <CartPage />}
+        {currentPage === 'profile' && (
+          <div className="max-w-2xl mx-auto py-20 text-center">
+            <h2 className="text-3xl font-bold mb-4">Личный кабинет</h2>
+            <p className="text-gray-500">Здесь будет ваша история заказов, бонусы и настройки профиля.</p>
+            <button 
+              className="mt-8 border border-black px-6 py-2 rounded-full font-bold"
+              onClick={() => setCurrentPage('home')}
+            >
+              Вернуться на главную
+            </button>
+          </div>
+        )}
+      </main>
+
+      <footer className="bg-gray-50 border-t border-gray-100 mt-20">
+        <div className="max-w-7xl mx-auto px-6 py-12 grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="col-span-2">
+            <h2 className="text-xl font-black mb-4">MODAHUB</h2>
+            <p className="text-gray-500 max-w-sm mb-6">Ваш гид в мире моды и стиля. Лучшие бренды, эксклюзивные коллекции и быстрая доставка по всей стране.</p>
+            <div className="flex gap-4">
+              <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center cursor-pointer hover:bg-blue-600 hover:text-white transition-all">FB</div>
+              <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center cursor-pointer hover:bg-pink-600 hover:text-white transition-all">IG</div>
+              <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center cursor-pointer hover:bg-black hover:text-white transition-all">TT</div>
+            </div>
+          </div>
+          <div>
+            <h4 className="font-bold mb-4 uppercase text-xs tracking-widest text-gray-400">Покупателям</h4>
+            <ul className="space-y-2 text-sm text-gray-600">
+              <li className="hover:text-black cursor-pointer">Доставка</li>
+              <li className="hover:text-black cursor-pointer">Возврат</li>
+              <li className="hover:text-black cursor-pointer">Таблица размеров</li>
+              <li className="hover:text-black cursor-pointer">FAQ</li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-bold mb-4 uppercase text-xs tracking-widest text-gray-400">Компания</h4>
+            <ul className="space-y-2 text-sm text-gray-600">
+              <li className="hover:text-black cursor-pointer">О нас</li>
+              <li className="hover:text-black cursor-pointer">Партнерам</li>
+              <li className="hover:text-black cursor-pointer">Карьера</li>
+              <li className="hover:text-black cursor-pointer">Контакты</li>
+            </ul>
+          </div>
+        </div>
+        <div className="border-t border-gray-200 py-6 px-6 text-center text-xs text-gray-400">
+          © 2025 MODAHUB Marketplace. Все права защищены.
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+export default App;
