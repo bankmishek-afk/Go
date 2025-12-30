@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MODAHUB Marketplace</title>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -41,7 +42,6 @@
     const Truck = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>;
     const ShieldCheck = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>;
     const RefreshCw = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L20.49 9M3.51 15a9 9 0 0 1 14.85 3.36L20.49 15"/></svg>;
-    const GoogleIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M21.35,11.1H12.18V13.83H18.69C18.36,17.64 15.19,19.27 12.19,19.27C8.36,19.27 5,16.25 5,12C5,7.9 8.2,4.73 12.19,4.73C14.76,4.73 16.04,5.7 17.09,6.62L19.27,4.59C17.43,2.97 15.08,2 12.19,2C6.92,2 2.73,6.33 2.73,12C2.73,17.67 6.92,22 12.19,22C17.6,22 21.54,18.33 21.54,12.23C21.54,11.63 21.48,11.36 21.35,11.1Z"/></svg>;
     const AppleIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M16.5,18.82C16.5,18.82 17.2,16.22 19,16.22C20.8,16.22 21.23,17.53 21.23,17.53C21.23,17.53 22.06,14.62 20.26,13.12C18.46,11.62 16.5,12.22 16.5,12.22C16.5,12.22 15.13,10.12 13.03,10.12C10.93,10.12 9,11.72 9,14.22C9,16.72 10.5,18.22 11.8,18.22C13.1,18.22 13.5,17.22 15.5,17.22C17.5,17.22 17.8,18.82 16.5,18.82M14.5,7.32C15.1,6.62 15.6,5.72 15.5,4.72C15.4,3.72 14.5,2.92 13.6,2.92C12.7,2.82 11.6,3.52 11.1,4.32C10.6,5.12 10.1,6.12 10.2,7.02C10.3,8.02 11.2,8.82 12.2,8.82C13.2,8.82 13.9,7.92 14.5,7.32Z"/></svg>;
 
     // Имитация данных о товарах
@@ -72,6 +72,33 @@
       const [favorites, setFavorites] = useState([]);
       const [searchQuery, setSearchQuery] = useState("");
       const [activeCategory, setActiveCategory] = useState("Все");
+      const [user, setUser] = useState(null);
+
+      function handleCredentialResponse(response) {
+        // console.log("Encoded JWT ID token: " + response.credential);
+        // Decode the JWT to get user info.
+        const base64Url = response.credential.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+
+        setUser(JSON.parse(jsonPayload));
+      }
+
+      function handleSignOut() {
+        setUser(null);
+        google.accounts.id.disableAutoSelect();
+      }
+
+      useEffect(() => {
+        /* global google */
+        google.accounts.id.initialize({
+          client_id: "45838707288-ta8hpj4dipp1ul9nev91lps7dr9ops05.apps.googleusercontent.com",
+          callback: handleCredentialResponse
+        });
+      }, []);
+
 
       const addToCart = (product) => {
         setCart(prev => {
@@ -115,7 +142,9 @@
               <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
             </div>
             <div className="flex items-center gap-5">
-              <button className="relative p-2 text-gray-600 hover:text-blue-600 transition-colors" onClick={() => setCurrentPage('profile')}><User size={24} /></button>
+              <button className="relative p-2 text-gray-600 hover:text-blue-600 transition-colors" onClick={() => setCurrentPage('profile')}>
+                { user ? <img src={user.picture} alt="User" className="w-6 h-6 rounded-full" /> : <User size={24} /> }
+              </button>
               <button className="relative p-2 text-gray-600 hover:text-blue-600 transition-colors">
                 <Heart size={24} />
                 {favorites.length > 0 && <span className="absolute top-1 right-1 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">{favorites.length}</span>}
@@ -258,25 +287,52 @@
         </div>
       );
 
-      const ProfilePage = () => (
-        <div className="max-w-2xl mx-auto py-20 px-4 text-center animate-in fade-in duration-300">
-            <h2 className="text-3xl font-bold mb-4">Вход в личный кабинет</h2>
-            <p className="text-gray-500 mb-8">Войдите, чтобы видеть историю заказов, бонусы и настройки профиля.</p>
+      const ProfilePage = () => {
 
-            <div className="space-y-4 max-w-sm mx-auto">
-              <button className="w-full flex items-center justify-center gap-3 bg-white border border-gray-200 text-black px-4 py-3 rounded-full font-bold hover:bg-gray-50 transition-all">
-                <GoogleIcon />
-                <span>Войти через Google</span>
-              </button>
-              <button className="w-full flex items-center justify-center gap-3 bg-black text-white px-4 py-3 rounded-full font-bold hover:bg-gray-800 transition-all">
-                <AppleIcon />
-                <span>Войти через Apple</span>
-              </button>
-            </div>
+        useEffect(() => {
+          if (!user) {
+            /* global google */
+            google.accounts.id.renderButton(
+              document.getElementById("google-signin-button"),
+              { theme: "outline", size: "large", text: "signin_with", shape: "pill", width: "300" }  // customization attributes
+            );
+            // google.accounts.id.prompt(); // also display the One Tap dialog
+          }
+        }, [user]);
 
-            <button className="mt-12 text-sm text-gray-500 hover:text-black" onClick={() => setCurrentPage('home')}>Вернуться на главную</button>
-        </div>
-      );
+        return (
+          <div className="max-w-2xl mx-auto py-20 px-4 text-center animate-in fade-in duration-300">
+              { user ? (
+                <div>
+                  <img src={user.picture} alt="User" className="w-24 h-24 rounded-full mx-auto mb-4" />
+                  <h2 className="text-3xl font-bold mb-2">Здравствуйте, {user.name}!</h2>
+                  <p className="text-gray-500 mb-8">{user.email}</p>
+                  <button onClick={handleSignOut} className="bg-red-500 text-white px-8 py-3 rounded-full font-bold hover:bg-red-600 transition-all">Выйти</button>
+                </div>
+              ) : (
+                <div>
+                  <h2 className="text-3xl font-bold mb-4">Вход в личный кабинет</h2>
+                  <p className="text-gray-500 mb-8">Войдите, чтобы видеть историю заказов, бонусы и настройки профиля.</p>
+                  <div className="flex justify-center">
+                    <div id="google-signin-button"></div>
+                  </div>
+                  <div className="my-4 flex items-center max-w-sm mx-auto">
+                    <div className="flex-grow border-t border-gray-200"></div>
+                    <span className="flex-shrink mx-4 text-gray-400 text-sm">или</span>
+                    <div className="flex-grow border-t border-gray-200"></div>
+                  </div>
+                  <div className="flex justify-center">
+                    <button className="flex items-center justify-center gap-3 bg-black text-white px-8 py-3 rounded-full font-bold hover:bg-gray-800 transition-all" style={{width: "300px"}}>
+                      <AppleIcon />
+                      <span>Войти через Apple</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+              <button className="mt-12 text-sm text-gray-500 hover:text-black" onClick={() => setCurrentPage('home')}>Вернуться на главную</button>
+          </div>
+        );
+      };
 
       return (
         <div className="min-h-screen bg-white text-gray-900 font-sans selection:bg-blue-100 selection:text-blue-900">
