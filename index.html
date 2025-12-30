@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MODAHUB Marketplace</title>
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -42,9 +41,7 @@
     const Truck = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>;
     const ShieldCheck = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>;
     const RefreshCw = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L20.49 9M3.51 15a9 9 0 0 1 14.85 3.36L20.49 15"/></svg>;
-    const AppleIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M16.5,18.82C16.5,18.82 17.2,16.22 19,16.22C20.8,16.22 21.23,17.53 21.23,17.53C21.23,17.53 22.06,14.62 20.26,13.12C18.46,11.62 16.5,12.22 16.5,12.22C16.5,12.22 15.13,10.12 13.03,10.12C10.93,10.12 9,11.72 9,14.22C9,16.72 10.5,18.22 11.8,18.22C13.1,18.22 13.5,17.22 15.5,17.22C17.5,17.22 17.8,18.82 16.5,18.82M14.5,7.32C15.1,6.62 15.6,5.72 15.5,4.72C15.4,3.72 14.5,2.92 13.6,2.92C12.7,2.82 11.6,3.52 11.1,4.32C10.6,5.12 10.1,6.12 10.2,7.02C10.3,8.02 11.2,8.82 12.2,8.82C13.2,8.82 13.9,7.92 14.5,7.32Z"/></svg>;
 
-    // Имитация данных о товарах
     const PRODUCTS = [
         { id: 1, name: "Оверсайз худи 'Cloud'", price: 4900, rating: 4.8, reviews: 124, category: "Верхняя одежда", image: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&q=80&w=800", colors: ["#3b82f6", "#1e293b", "#94a3b8"], sizes: ["S", "M", "L", "XL"] },
         { id: 2, name: "Джинсы Wide Leg Denim", price: 6200, rating: 4.9, reviews: 89, category: "Брюки", image: "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&q=80&w=800", colors: ["#1e3a8a", "#60a5fa"], sizes: ["28", "30", "32", "34"] },
@@ -66,7 +63,7 @@
     const CATEGORIES = ["Все", "Женщинам", "Мужчинам", "Аксессуары", "Обувь", "Sale"];
 
     const App = () => {
-      const [currentPage, setCurrentPage] = useState('home'); // 'home', 'product', 'cart', 'profile'
+      const [currentPage, setCurrentPage] = useState('home');
       const [selectedProduct, setSelectedProduct] = useState(null);
       const [cart, setCart] = useState([]);
       const [favorites, setFavorites] = useState([]);
@@ -74,31 +71,13 @@
       const [activeCategory, setActiveCategory] = useState("Все");
       const [user, setUser] = useState(null);
 
-      function handleCredentialResponse(response) {
-        // console.log("Encoded JWT ID token: " + response.credential);
-        // Decode the JWT to get user info.
-        const base64Url = response.credential.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        }).join(''));
+      const handleLogin = (email) => {
+        setUser({ email });
+      };
 
-        setUser(JSON.parse(jsonPayload));
-      }
-
-      function handleSignOut() {
+      const handleSignOut = () => {
         setUser(null);
-        google.accounts.id.disableAutoSelect();
-      }
-
-      useEffect(() => {
-        /* global google */
-        google.accounts.id.initialize({
-          client_id: "45838707288-h5s16knofs3dcil830jo6b042m9ef761.apps.googleusercontent.com",
-          callback: handleCredentialResponse
-        });
-      }, []);
-
+      };
 
       const addToCart = (product) => {
         setCart(prev => {
@@ -143,7 +122,7 @@
             </div>
             <div className="flex items-center gap-5">
               <button className="relative p-2 text-gray-600 hover:text-blue-600 transition-colors" onClick={() => setCurrentPage('profile')}>
-                { user ? <img src={user.picture} alt="User" className="w-6 h-6 rounded-full" /> : <User size={24} /> }
+                <User size={24} />
               </button>
               <button className="relative p-2 text-gray-600 hover:text-blue-600 transition-colors">
                 <Heart size={24} />
@@ -288,24 +267,21 @@
       );
 
       const ProfilePage = () => {
+        const [email, setEmail] = useState('');
+        const [password, setPassword] = useState('');
 
-        useEffect(() => {
-          if (!user) {
-            /* global google */
-            google.accounts.id.renderButton(
-              document.getElementById("google-signin-button"),
-              { theme: "outline", size: "large", text: "signin_with", shape: "pill", width: "300" }  // customization attributes
-            );
-            // google.accounts.id.prompt(); // also display the One Tap dialog
-          }
-        }, [user]);
+        const handleSubmit = (e) => {
+            e.preventDefault();
+            if(email && password) {
+                handleLogin(email);
+            }
+        }
 
         return (
-          <div className="max-w-2xl mx-auto py-20 px-4 text-center animate-in fade-in duration-300">
+          <div className="max-w-md mx-auto py-20 px-4 text-center animate-in fade-in duration-300">
               { user ? (
                 <div>
-                  <img src={user.picture} alt="User" className="w-24 h-24 rounded-full mx-auto mb-4" />
-                  <h2 className="text-3xl font-bold mb-2">Здравствуйте, {user.name}!</h2>
+                  <h2 className="text-3xl font-bold mb-2">Здравствуйте!</h2>
                   <p className="text-gray-500 mb-8">{user.email}</p>
                   <button onClick={handleSignOut} className="bg-red-500 text-white px-8 py-3 rounded-full font-bold hover:bg-red-600 transition-all">Выйти</button>
                 </div>
@@ -313,20 +289,27 @@
                 <div>
                   <h2 className="text-3xl font-bold mb-4">Вход в личный кабинет</h2>
                   <p className="text-gray-500 mb-8">Войдите, чтобы видеть историю заказов, бонусы и настройки профиля.</p>
-                  <div className="flex justify-center">
-                    <div id="google-signin-button"></div>
-                  </div>
-                  <div className="my-4 flex items-center max-w-sm mx-auto">
-                    <div className="flex-grow border-t border-gray-200"></div>
-                    <span className="flex-shrink mx-4 text-gray-400 text-sm">или</span>
-                    <div className="flex-grow border-t border-gray-200"></div>
-                  </div>
-                  <div className="flex justify-center">
-                    <button className="flex items-center justify-center gap-3 bg-black text-white px-8 py-3 rounded-full font-bold hover:bg-gray-800 transition-all" style={{width: "300px"}}>
-                      <AppleIcon />
-                      <span>Войти через Apple</span>
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <input
+                      type="email"
+                      placeholder="Email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                    <input
+                      type="password"
+                      placeholder="Пароль"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                    <button type="submit" className="w-full bg-black text-white px-8 py-3 rounded-full font-bold hover:bg-gray-800 transition-all">
+                      Войти
                     </button>
-                  </div>
+                  </form>
                 </div>
               )}
               <button className="mt-12 text-sm text-gray-500 hover:text-black" onClick={() => setCurrentPage('home')}>Вернуться на главную</button>
@@ -341,7 +324,7 @@
             {currentPage === 'home' && <HomePage />}
             {currentPage === 'product' && <ProductPage product={selectedProduct} />}
             {currentPage === 'cart' && <CartPage />}
-            {currentPage === 'profile' && <ProfilePage />}
+            {currentPage === 'profile' && <ProfilePage user={user} handleLogin={handleLogin} handleSignOut={handleSignOut} />}
           </main>
           <footer className="bg-gray-50 border-t border-gray-100 mt-20">
             <div className="max-w-7xl mx-auto px-6 py-12 grid grid-cols-2 md:grid-cols-4 gap-8">
